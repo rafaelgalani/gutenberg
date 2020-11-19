@@ -20,12 +20,15 @@ import { useSelect, useDispatch } from '@wordpress/data';
 /**
  * Internal dependencies
  */
-import { default as getGlobalStyles } from './global-styles-renderer';
 import {
 	GLOBAL_CONTEXT,
 	getValueFromVariable,
 	getPresetVariable,
 } from './utils';
+import {
+	default as getGlobalStyles,
+	getPresetStylesAndVariables,
+} from './global-styles-renderer';
 
 const EMPTY_CONTENT = '{}';
 
@@ -187,6 +190,32 @@ export default function GlobalStylesProvider( { children, baseStyles } ) {
 		} ),
 		[ content, mergedStyles ]
 	);
+
+	useEffect( () => {
+		if (
+			typeof contexts !== 'object' ||
+			typeof baseStyles !== 'object' ||
+			typeof userStyles !== 'object'
+		) {
+			return;
+		}
+
+		const embeddedStylesheetId = 'global-styles-presets-inline-css';
+		let styleNode = document.getElementById( embeddedStylesheetId );
+
+		if ( ! styleNode ) {
+			styleNode = document.createElement( 'style' );
+			styleNode.id = embeddedStylesheetId;
+			document
+				.getElementsByTagName( 'head' )[ 0 ]
+				.appendChild( styleNode );
+		}
+
+		styleNode.innerText = getPresetStylesAndVariables(
+			contexts,
+			mergedStyles
+		);
+	}, [ contexts, baseStyles, content ] );
 
 	useEffect( () => {
 		const newStyles = settings.styles.filter(
